@@ -21,13 +21,13 @@ import com.example.thetaskapp.databinding.FragmentEditTaskBinding
 import com.example.thetaskapp.model.Task
 import com.example.thetaskapp.viewmodel.TaskViewModel
 
-
 class EditTaskFragment : Fragment(R.layout.fragment_edit_task),MenuProvider {
     private var editTaskBinding:FragmentEditTaskBinding? = null
     private val binding get() = editTaskBinding!!
 
     private lateinit var taskViewModel: TaskViewModel
     private lateinit var currentTask:Task
+    private lateinit var editTaskView: View
 
     private val args:EditTaskFragmentArgs by navArgs()
 
@@ -36,7 +36,7 @@ class EditTaskFragment : Fragment(R.layout.fragment_edit_task),MenuProvider {
         savedInstanceState: Bundle?
     ): View? {
         // Inflate the layout for this fragment
-       editTaskBinding = FragmentEditTaskBinding.inflate(inflater,container,false)
+        editTaskBinding = FragmentEditTaskBinding.inflate(inflater,container,false)
         return binding.root
     }
 
@@ -47,6 +47,7 @@ class EditTaskFragment : Fragment(R.layout.fragment_edit_task),MenuProvider {
         menuHost.addMenuProvider(this,viewLifecycleOwner, Lifecycle.State.RESUMED)
 
         taskViewModel = (activity as MainActivity).taskViewModel
+        editTaskView = view
         currentTask = args.task!!
 
         binding.editNoteTitle.setText(currentTask.taskTitle)
@@ -79,6 +80,20 @@ class EditTaskFragment : Fragment(R.layout.fragment_edit_task),MenuProvider {
         }.create().show()
     }
 
+    private fun updateTask(view: View){
+        val taskTitle = binding.editNoteTitle.text.toString().trim()
+        val taskDesc = binding.editNoteDesc.text.toString().trim()
+
+        if(taskTitle.isNotEmpty()){
+            val task = Task(currentTask.id,taskTitle,taskDesc)
+            taskViewModel.updateTask(task)
+            view.findNavController().popBackStack(R.id.homeFragment,false)
+
+        }else{
+            Toast.makeText(context,"Please enter task title",Toast.LENGTH_SHORT).show()
+        }
+    }
+
     override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
         menu.clear()
         menuInflater.inflate(R.menu.menu_edit_task,menu)
@@ -88,6 +103,9 @@ class EditTaskFragment : Fragment(R.layout.fragment_edit_task),MenuProvider {
         return when(menuItem.itemId){
             R.id.deleteMenu -> {
                 deletetask()
+                true
+            }R.id.saveMenu ->{
+                updateTask(editTaskView)
                 true
             }else-> false
         }
